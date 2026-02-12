@@ -1,0 +1,45 @@
+You are an expert market research analyst preparing a brief for a B2B sales team.
+
+Generate a concise research brief for this lead that will help the sales team understand the opportunity and risks.
+
+LEAD INFORMATION:
+Company: {company_name}
+Website: {website}
+Notes: {notes}
+
+DATA QUALITY ASSESSMENT:
+{data_quality_note}
+
+YOUR TASK:
+Create a structured research brief with the following sections:
+
+## COMPANY SUMMARY
+Provide a 2-3 sentence overview:
+- What the company does (products/services)
+- Their market position and scale
+- Recent notable developments or news
+
+## INDUSTRY SNAPSHOT
+Brief context about their industry:
+- Key trends affecting their business
+- Competitive dynamics
+- Growth trajectory and market conditions
+
+## BUYER PERSONA
+Identify likely decision-makers and influencers:
+- Typical roles involved in buying decisions
+- Their likely priorities and pain points
+- What motivates them to buy solutions like ours
+
+## RISK SIGNALS
+Flag any concerns or timing considerations:
+- Financial health indicators (if available)
+- Competitive threats or market challenges
+- Timing risks (budget cycles, leadership changes, etc.)
+- Any red flags that might derail a deal
+
+IMPORTANT GUIDELINES:
+- Keep the brief concise (300-400 words total) but actionable.
+- If speculating due to limited info, prefix with "Based on available information..."
+- Do NOT present speculation as fact. Clearly distinguish what you know from what you're inferring.
+- Focus on insights that will help the sales team engage effectively.
