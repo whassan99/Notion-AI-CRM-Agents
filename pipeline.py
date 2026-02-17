@@ -9,8 +9,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from config import Config
 from services.notion_service import NotionService
 from services.claude_service import ClaudeService
+from services.web_research_service import WebResearchService
 from agents import ICPAgent, ResearchAgent, PriorityAgent
 
 logger = logging.getLogger(__name__)
@@ -61,6 +63,7 @@ class PipelineResult:
 def run_pipeline(
     limit: Optional[int] = None,
     dry_run: bool = False,
+    no_web: bool = False,
 ) -> PipelineResult:
     """
     Run the full AI agent pipeline on leads.
@@ -68,6 +71,7 @@ def run_pipeline(
     Args:
         limit: Maximum number of leads to process.
         dry_run: If True, use sample data and skip Notion writes.
+        no_web: If True, disable web research entirely.
 
     Returns:
         PipelineResult with counts and error details.
@@ -100,9 +104,17 @@ def run_pipeline(
         leads = leads[:limit]
         logger.info("Processing first %d leads", len(leads))
 
+    # Initialize web research service
+    web_research = None
+    if Config.WEB_RESEARCH_ENABLED and not no_web:
+        web_research = WebResearchService()
+        logger.info("Web research enabled")
+    else:
+        logger.info("Web research disabled")
+
     # Initialize agents
     icp_agent = ICPAgent(claude)
-    research_agent = ResearchAgent(claude)
+    research_agent = ResearchAgent(claude, web_research_service=web_research)
     priority_agent = PriorityAgent(claude)
 
     # Process each lead

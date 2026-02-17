@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Notion AI CRM Agents social preview">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1F1F1F"/>
+      <stop offset="100%" stop-color="#0F0F0F"/>
+    </linearGradient>
+    <style>
+      .eyebrow { font: 600 22px 'Arial', sans-serif; letter-spacing: 2px; fill: #D4D4D4; text-anchor: middle; }
+      .title { font: 700 72px 'Arial', sans-serif; fill: #FFFFFF; text-anchor: middle; }
+      .subtitle { font: 400 34px 'Arial', sans-serif; fill: #E5E5E5; text-anchor: middle; }
+      .chipText { font: 600 24px 'Arial', sans-serif; fill: #FFFFFF; text-anchor: middle; }
+      .footer { font: 500 24px 'Arial', sans-serif; fill: #BDBDBD; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <circle cx="180" cy="100" r="120" fill="#FFFFFF" opacity="0.04"/>
+  <circle cx="1100" cy="540" r="180" fill="#FFFFFF" opacity="0.04"/>
+
+  <text class="eyebrow" x="640" y="130">MULTI-AGENT CRM AUTOMATION</text>
+  <text class="title" x="640" y="240">Notion AI CRM Agents</text>
+  <text class="subtitle" x="640" y="305">Score, research, and prioritize leads automatically</text>
+
+  <rect x="420" y="355" rx="16" ry="16" width="440" height="64" fill="#2A2A2A"/>
+  <text class="chipText" x="640" y="397">Autonomous Lead Intelligence</text>
+
+  <text class="footer" x="640" y="520">Python • Notion • Anthropic</text>
+</svg>

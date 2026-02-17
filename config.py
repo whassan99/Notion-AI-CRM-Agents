@@ -27,6 +27,13 @@ class Config:
     LOW_STALE_DAYS: int = int(os.getenv("LOW_STALE_DAYS", "45"))
     STALE_DAYS_THRESHOLD: int = int(os.getenv("STALE_DAYS_THRESHOLD", "14"))
 
+    # --- Web Research ---
+    BRAVE_SEARCH_API_KEY: str = os.getenv("BRAVE_SEARCH_API_KEY", "")
+    WEB_RESEARCH_ENABLED: bool = os.getenv("WEB_RESEARCH_ENABLED", "true").lower() in ("true", "1", "yes")
+    WEB_RESEARCH_TIMEOUT: int = int(os.getenv("WEB_RESEARCH_TIMEOUT", "10"))
+    WEB_RESEARCH_DELAY: float = float(os.getenv("WEB_RESEARCH_DELAY", "1.0"))
+    WEB_RESEARCH_MAX_PAGES: int = int(os.getenv("WEB_RESEARCH_MAX_PAGES", "3"))
+
     # --- ICP Criteria (injected into prompt) ---
     ICP_CRITERIA: str = os.getenv(
         "ICP_CRITERIA",

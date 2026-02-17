@@ -5,6 +5,7 @@ Usage:
     python main.py              # Run full pipeline on all leads
     python main.py --limit 5    # Process only first 5 leads
     python main.py --dry-run    # Test with sample data, no Notion writes
+    python main.py --no-web     # Disable web research
 """
 
 import sys
@@ -25,6 +26,7 @@ Examples:
   python main.py              Process all leads
   python main.py --limit 3    Process first 3 leads only
   python main.py --dry-run    Test with sample data (no Notion writes)
+  python main.py --no-web     Disable web research
         """,
     )
     parser.add_argument(
@@ -37,6 +39,11 @@ Examples:
         "--dry-run",
         action="store_true",
         help="Use sample leads and skip Notion writes",
+    )
+    parser.add_argument(
+        "--no-web",
+        action="store_true",
+        help="Disable web research (website scraping and search)",
     )
 
     args = parser.parse_args()
@@ -57,7 +64,7 @@ Examples:
 
     # Run the pipeline
     try:
-        result = run_pipeline(limit=args.limit, dry_run=args.dry_run)
+        result = run_pipeline(limit=args.limit, dry_run=args.dry_run, no_web=args.no_web)
         if result.failed and not result.succeeded:
             sys.exit(1)
     except KeyboardInterrupt:

@@ -7,6 +7,9 @@ Company: {company_name}
 Website: {website}
 Notes: {notes}
 
+WEB RESEARCH CONTEXT:
+{web_research}
+
 DATA QUALITY ASSESSMENT:
 {data_quality_note}
 
@@ -40,6 +43,9 @@ Flag any concerns or timing considerations:
 
 IMPORTANT GUIDELINES:
 - Keep the brief concise (300-400 words total) but actionable.
+- Prioritize information from the actual website content over inference when web research data is available.
+- Cross-reference website content with the notes field to validate or enrich insights.
 - If speculating due to limited info, prefix with "Based on available information..."
-- Do NOT present speculation as fact. Clearly distinguish what you know from what you're inferring.
+- Clearly distinguish between facts sourced from the website, facts from CRM notes, and your own inferences.
+- Do NOT present speculation as fact.
 - Focus on insights that will help the sales team engage effectively.
