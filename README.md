@@ -2,9 +2,6 @@
 
 AI agents that turn raw Notion leads into scored, researched, and prioritized opportunities you can act on faster.
 
-## 🎥 Demo Video
-
-Demo walkthrough (placeholder): [Watch here](https://example.com/demo-video)
 
 ## Description
 
