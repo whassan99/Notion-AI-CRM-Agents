@@ -13,6 +13,7 @@ from config import Config
 from services.notion_service import NotionService
 from services.claude_service import ClaudeService
 from services.web_research_service import WebResearchService
+from services.notification_service import LeadSummary, SlackNotifier
 from agents import ICPAgent, ResearchAgent, PriorityAgent
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ class PipelineResult:
     failed: int = 0
     skipped: int = 0
     errors: List[str] = field(default_factory=list)
+    lead_summaries: List[LeadSummary] = field(default_factory=list)
 
     @property
     def total(self) -> int:
@@ -64,6 +66,7 @@ def run_pipeline(
     limit: Optional[int] = None,
     dry_run: bool = False,
     no_web: bool = False,
+    notify_slack: bool = False,
 ) -> PipelineResult:
     """
     Run the full AI agent pipeline on leads.
@@ -72,6 +75,7 @@ def run_pipeline(
         limit: Maximum number of leads to process.
         dry_run: If True, use sample data and skip Notion writes.
         no_web: If True, disable web research entirely.
+        notify_slack: If True, post a summary to Slack after the run.
 
     Returns:
         PipelineResult with counts and error details.
@@ -150,6 +154,12 @@ def run_pipeline(
                     logger.warning("Failed to write results for %s", company)
 
             result.succeeded += 1
+            result.lead_summaries.append(LeadSummary(
+                company=company,
+                icp_score=icp_results.get("icp_score", -1),
+                priority_tier=priority_results.get("priority_tier", "review"),
+                stale=priority_results.get("stale_flag", False),
+            ))
             logger.info("Done: %s", company)
 
         except Exception as e:
@@ -165,5 +175,21 @@ def run_pipeline(
         logger.info("Errors:")
         for err in result.errors:
             logger.info("  - %s", err)
+
+    # Slack notification
+    if notify_slack or Config.SLACK_ENABLED:
+        webhook_url = Config.SLACK_WEBHOOK_URL
+        if webhook_url:
+            notifier = SlackNotifier(webhook_url)
+            notifier.send_pipeline_summary(
+                succeeded=result.succeeded,
+                failed=result.failed,
+                skipped=result.skipped,
+                leads=result.lead_summaries,
+                errors=result.errors,
+                dry_run=dry_run,
+            )
+        else:
+            logger.warning("Slack notification requested but SLACK_WEBHOOK_URL is not set")
 
     return result

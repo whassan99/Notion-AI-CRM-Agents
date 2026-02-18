@@ -6,6 +6,7 @@ Usage:
     python main.py --limit 5    # Process only first 5 leads
     python main.py --dry-run    # Test with sample data, no Notion writes
     python main.py --no-web     # Disable web research
+    python main.py --slack      # Post a run summary to Slack when done
 """
 
 import sys
@@ -27,6 +28,7 @@ Examples:
   python main.py --limit 3    Process first 3 leads only
   python main.py --dry-run    Test with sample data (no Notion writes)
   python main.py --no-web     Disable web research
+  python main.py --slack      Post Slack summary after run
         """,
     )
     parser.add_argument(
@@ -44,6 +46,11 @@ Examples:
         "--no-web",
         action="store_true",
         help="Disable web research (website scraping and search)",
+    )
+    parser.add_argument(
+        "--slack",
+        action="store_true",
+        help="Post a run summary to Slack after the pipeline completes (requires SLACK_WEBHOOK_URL)",
     )
 
     args = parser.parse_args()
@@ -64,7 +71,12 @@ Examples:
 
     # Run the pipeline
     try:
-        result = run_pipeline(limit=args.limit, dry_run=args.dry_run, no_web=args.no_web)
+        result = run_pipeline(
+            limit=args.limit,
+            dry_run=args.dry_run,
+            no_web=args.no_web,
+            notify_slack=args.slack,
+        )
         if result.failed and not result.succeeded:
             sys.exit(1)
     except KeyboardInterrupt:

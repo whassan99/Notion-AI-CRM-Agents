@@ -27,6 +27,10 @@ class Config:
     LOW_STALE_DAYS: int = int(os.getenv("LOW_STALE_DAYS", "45"))
     STALE_DAYS_THRESHOLD: int = int(os.getenv("STALE_DAYS_THRESHOLD", "14"))
 
+    # --- Slack Notifications ---
+    SLACK_WEBHOOK_URL: str = os.getenv("SLACK_WEBHOOK_URL", "")
+    SLACK_ENABLED: bool = os.getenv("SLACK_ENABLED", "false").lower() in ("true", "1", "yes")
+
     # --- Web Research ---
     BRAVE_SEARCH_API_KEY: str = os.getenv("BRAVE_SEARCH_API_KEY", "")
     WEB_RESEARCH_ENABLED: bool = os.getenv("WEB_RESEARCH_ENABLED", "true").lower() in ("true", "1", "yes")
