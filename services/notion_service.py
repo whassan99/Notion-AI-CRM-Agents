@@ -52,6 +52,7 @@ class NotionService:
         self.api_key = api_key or Config.NOTION_API_KEY
         self.database_id = database_id or Config.NOTION_DATABASE_ID
         self.client = Client(auth=self.api_key)
+        self._database_properties_cache: Optional[Dict[str, Dict[str, Any]]] = None
 
     def validate_database(self) -> None:
         """
@@ -93,6 +94,7 @@ class NotionService:
                 "See NOTION_SETUP.md for the required schema.",
                 ", ".join(sorted(missing)),
             )
+        self._database_properties_cache = db.get("properties", {})
 
     @_retry
     def _retrieve_database(self) -> Dict:
@@ -131,7 +133,10 @@ class NotionService:
     def update_lead(self, page_id: str, properties: Dict[str, Any]) -> bool:
         """Update a Notion page with agent results."""
         try:
-            notion_properties = self._format_properties_for_notion(properties)
+            notion_properties = self._prepare_update_properties(properties)
+            if not notion_properties:
+                logger.warning("No valid output properties to write for page %s", page_id)
+                return True
             self._update_page(page_id, notion_properties)
             return True
         except APIResponseError as e:
@@ -156,20 +161,78 @@ class NotionService:
             "status": self._get_select(props.get(Config.NOTION_PROP_STATUS, {})),
         }
 
+    def _prepare_update_properties(self, properties: Dict[str, Any]) -> Dict:
+        """Map canonical keys, drop unknown columns, then format per Notion schema."""
+        mapped = self._map_output_property_names(properties)
+        return self._format_properties_for_notion(mapped)
+
+    @staticmethod
+    def _output_property_map() -> Dict[str, str]:
+        """Canonical output keys -> configured Notion column names."""
+        return {
+            "icp_score": Config.NOTION_PROP_ICP_SCORE,
+            "confidence_score": Config.NOTION_PROP_CONFIDENCE,
+            "icp_reasoning": Config.NOTION_PROP_ICP_REASONING,
+            "research_brief": Config.NOTION_PROP_RESEARCH_BRIEF,
+            "priority_tier": Config.NOTION_PROP_PRIORITY_TIER,
+            "priority_reasoning": Config.NOTION_PROP_PRIORITY_REASONING,
+            "stale_flag": Config.NOTION_PROP_STALE_FLAG,
+        }
+
+    def _map_output_property_names(self, properties: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert canonical result keys to configured Notion property names.
+        Unknown keys are left unchanged and may be filtered later.
+        """
+        key_map = self._output_property_map()
+        return {key_map.get(key, key): value for key, value in properties.items()}
+
+    def _get_database_properties(self) -> Dict[str, Dict[str, Any]]:
+        """Get Notion database properties with lightweight caching."""
+        if self._database_properties_cache is not None:
+            return self._database_properties_cache
+        db = self._retrieve_database()
+        self._database_properties_cache = db.get("properties", {})
+        return self._database_properties_cache
+
     def _format_properties_for_notion(self, properties: Dict[str, Any]) -> Dict:
-        """Convert a simple dict to Notion property format."""
+        """Convert a simple dict to Notion property format using schema-aware typing."""
         notion_props = {}
+        db_props = self._get_database_properties()
+
         for key, value in properties.items():
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                notion_props[key] = {"number": value}
-            elif isinstance(value, bool):
-                notion_props[key] = {"checkbox": value}
-            elif isinstance(value, str):
-                # Notion rich_text content is limited to 2000 chars per block
-                text = value[:2000]
-                notion_props[key] = {
-                    "rich_text": [{"text": {"content": text}}]
-                }
+            if value is None:
+                continue
+            if key not in db_props:
+                logger.debug("Skipping unknown Notion property: %s", key)
+                continue
+
+            prop_type = db_props[key].get("type")
+            if prop_type == "number":
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    notion_props[key] = {"number": value}
+            elif prop_type == "checkbox":
+                if isinstance(value, bool):
+                    notion_props[key] = {"checkbox": value}
+            elif prop_type == "select":
+                if isinstance(value, str) and value.strip():
+                    notion_props[key] = {"select": {"name": value.strip()[:100]}}
+            elif prop_type == "status":
+                if isinstance(value, str) and value.strip():
+                    notion_props[key] = {"status": {"name": value.strip()[:100]}}
+            elif prop_type == "url":
+                if isinstance(value, str) and value.strip():
+                    notion_props[key] = {"url": value.strip()}
+            elif prop_type == "date":
+                if isinstance(value, str) and value.strip():
+                    notion_props[key] = {"date": {"start": value.strip()}}
+            elif prop_type == "title":
+                if isinstance(value, str):
+                    notion_props[key] = {"title": [{"text": {"content": value[:2000]}}]}
+            else:
+                # Default text-like output to rich_text.
+                if isinstance(value, str):
+                    notion_props[key] = {"rich_text": [{"text": {"content": value[:2000]}}]}
         return notion_props
 
     # --- Property helpers ---
