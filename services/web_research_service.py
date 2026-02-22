@@ -36,11 +36,13 @@ class WebResearchResult:
         website_content: str = "",
         search_results: str = "",
         pages_fetched: int = 0,
+        source_urls: Optional[List[str]] = None,
         errors: Optional[List[str]] = None,
     ):
         self.website_content = website_content
         self.search_results = search_results
         self.pages_fetched = pages_fetched
+        self.source_urls = source_urls or []
         self.errors = errors or []
 
     @property
@@ -58,6 +60,9 @@ class WebResearchResult:
             parts.append(f"WEBSITE CONTENT:\n{self.website_content}")
         if self.search_results:
             parts.append(f"SEARCH RESULTS:\n{self.search_results}")
+        if self.source_urls:
+            sources = "\n".join(f"- {url}" for url in self.source_urls)
+            parts.append(f"SOURCES:\n{sources}")
         return "\n\n".join(parts)
 
 
@@ -99,12 +104,17 @@ class WebResearchService:
             if content:
                 result.website_content = self._truncate(content)
                 result.pages_fetched = self._request_count
+                result.source_urls.append(url)
 
         # Run Brave search if API key is configured
         if self.brave_api_key and company_name:
-            search_content = self._brave_search(company_name)
+            search_content, search_urls = self._brave_search(company_name)
             if search_content:
                 result.search_results = search_content
+                result.source_urls.extend(search_urls)
+
+        # Deduplicate while preserving order
+        result.source_urls = list(dict.fromkeys(result.source_urls))
 
         return result
 
@@ -224,10 +234,10 @@ class WebResearchService:
             return True
         return parser.can_fetch("NotionCRMBot", url)
 
-    def _brave_search(self, query: str) -> str:
-        """Run a Brave Search API query. Returns formatted results or empty string."""
+    def _brave_search(self, query: str) -> tuple[str, List[str]]:
+        """Run a Brave Search API query. Returns formatted results and source URLs."""
         if not self.brave_api_key:
-            return ""
+            return "", []
 
         try:
             response = httpx.get(
@@ -242,21 +252,24 @@ class WebResearchService:
             response.raise_for_status()
         except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
             logger.warning("Brave search failed for '%s': %s", query, e)
-            return ""
+            return "", []
 
         data = response.json()
         results = data.get("web", {}).get("results", [])
         if not results:
-            return ""
+            return "", []
 
         lines = []
+        urls: List[str] = []
         for r in results[:5]:
             title = r.get("title", "")
             description = r.get("description", "")
             url = r.get("url", "")
             lines.append(f"- {title}: {description} ({url})")
+            if isinstance(url, str) and url.strip():
+                urls.append(url.strip())
 
-        return "\n".join(lines)
+        return "\n".join(lines), urls
 
     @staticmethod
     def _truncate(text: str) -> str:

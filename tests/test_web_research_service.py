@@ -263,12 +263,15 @@ class TestWebResearchResult:
         result = WebResearchResult(
             website_content="Website text",
             search_results="Search text",
+            source_urls=["https://example.com"],
         )
         section = result.to_prompt_section()
         assert "WEBSITE CONTENT:" in section
         assert "Website text" in section
         assert "SEARCH RESULTS:" in section
         assert "Search text" in section
+        assert "SOURCES:" in section
+        assert "https://example.com" in section
 
     def test_to_prompt_section_empty(self):
         result = WebResearchResult()
@@ -310,3 +313,28 @@ class TestResearchLead:
         assert isinstance(result, WebResearchResult)
         # No website, no brave key — should have no content but not crash
         assert not result.has_content
+
+
+class TestBraveSearch:
+    """Test Brave API response parsing."""
+
+    @patch("services.web_research_service.httpx.get")
+    def test_brave_search_returns_text_and_urls(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "web": {
+                "results": [
+                    {"title": "T1", "description": "D1", "url": "https://a.example"},
+                    {"title": "T2", "description": "D2", "url": "https://b.example"},
+                ]
+            }
+        }
+        mock_get.return_value = mock_response
+
+        service = WebResearchService(timeout=5, delay=0, brave_api_key="test-key")
+        text, urls = service._brave_search("acme")
+
+        assert "T1" in text
+        assert "T2" in text
+        assert urls == ["https://a.example", "https://b.example"]

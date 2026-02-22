@@ -99,6 +99,8 @@ python main.py
 
 - Produces a short lead research brief.
 - Flags lower-quality inputs and marks speculative reasoning.
+- Appends source citations (website/search/CRM notes) for auditability.
+- Outputs `research_confidence` and `research_source_count`.
 
 ### Prioritization Agent
 
@@ -108,6 +110,15 @@ python main.py
   - `priority_tier`
   - `priority_reasoning`
   - `stale_flag`
+
+### Action Agent
+
+- Recommends next step:
+  - `outreach_now`, `reengage`, `nurture`, `enrich_data`, `hold`
+- Produces:
+  - `next_action`
+  - `action_reasoning`
+  - `action_confidence`
 
 ## Configuration
 

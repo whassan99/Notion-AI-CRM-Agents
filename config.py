@@ -69,6 +69,9 @@ class Config:
     NOTION_PROP_NEXT_ACTION: str = os.getenv("NOTION_PROP_NEXT_ACTION", "next_action")
     NOTION_PROP_ACTION_REASONING: str = os.getenv("NOTION_PROP_ACTION_REASONING", "action_reasoning")
     NOTION_PROP_ACTION_CONFIDENCE: str = os.getenv("NOTION_PROP_ACTION_CONFIDENCE", "action_confidence")
+    NOTION_PROP_RESEARCH_CONFIDENCE: str = os.getenv("NOTION_PROP_RESEARCH_CONFIDENCE", "research_confidence")
+    NOTION_PROP_RESEARCH_CITATIONS: str = os.getenv("NOTION_PROP_RESEARCH_CITATIONS", "research_citations")
+    NOTION_PROP_RESEARCH_SOURCE_COUNT: str = os.getenv("NOTION_PROP_RESEARCH_SOURCE_COUNT", "research_source_count")
 
     @classmethod
     def validate(cls, require_notion: bool = True) -> bool:

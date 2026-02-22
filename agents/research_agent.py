@@ -35,6 +35,7 @@ class ResearchAgent(BaseAgent):
         # Gather web research if available
         web_research_text = "No web research data was available for this lead."
         has_web_content = False
+        web_result = None
         if self.web_research:
             try:
                 web_result = self.web_research.research_lead(lead)
@@ -52,8 +53,9 @@ class ResearchAgent(BaseAgent):
             except Exception as e:
                 logger.warning("Web research failed for %s: %s", lead.get("company_name"), e)
 
-        confidence = self._assess_data_quality(lead, has_web_content)
-        quality_note = self._quality_note(lead, confidence, has_web_content)
+        confidence = self._assess_data_quality(lead, web_result)
+        quality_note = self._quality_note(lead, confidence, web_result)
+        citations = self._build_citations(lead, web_result)
 
         prompt = self.prompt_template.format(
             company_name=lead.get("company_name", "N/A"),
@@ -70,37 +72,61 @@ class ResearchAgent(BaseAgent):
         )
 
         logger.info(
-            "Research for %s: confidence=%s, web_content=%s",
+            "Research for %s: confidence=%s, web_content=%s, sources=%d",
             lead.get("company_name"),
             confidence,
             has_web_content,
+            len(citations),
         )
 
+        brief = response
+        if citations:
+            brief = f"{response}\n\n## SOURCES\n" + "\n".join(f"- {c}" for c in citations)
+
         return {
-            "research_brief": response,
+            "research_brief": brief,
             "research_confidence": confidence,
+            "research_citations": "\n".join(f"- {c}" for c in citations),
+            "research_source_count": len(citations),
         }
 
     @staticmethod
-    def _assess_data_quality(lead: Dict[str, Any], has_web_content: bool = False) -> str:
-        """Rate data completeness: high / medium / low."""
+    def _assess_data_quality(lead: Dict[str, Any], web_result=None) -> str:
+        """Rate data quality using weighted evidence signals."""
         has_website = bool(lead.get("website"))
         has_notes = bool(lead.get("notes", "").strip())
         has_company = bool(lead.get("company_name", "").strip())
+        notes_len = len(lead.get("notes", "").strip())
+        has_web_content = bool(web_result and web_result.website_content)
+        has_search_results = bool(web_result and web_result.search_results)
+        pages_fetched = int(web_result.pages_fetched) if web_result else 0
 
-        filled = sum([has_website, has_notes, has_company])
+        score = 0
+        if has_company:
+            score += 1
+        if has_website:
+            score += 1
+        if has_notes:
+            score += 1
+        if notes_len >= 120:
+            score += 1
         if has_web_content:
-            filled += 1  # Web content is a quality boost
+            score += 2
+        if pages_fetched >= 2:
+            score += 1
+        if has_search_results:
+            score += 1
 
-        if filled >= 3:
+        if score >= 6:
             return "high"
-        elif filled >= 2:
+        if score >= 3:
             return "medium"
         return "low"
 
     @staticmethod
-    def _quality_note(lead: Dict[str, Any], confidence: str, has_web_content: bool = False) -> str:
+    def _quality_note(lead: Dict[str, Any], confidence: str, web_result=None) -> str:
         """Build a note describing what data is available/missing."""
+        has_web_content = bool(web_result and web_result.website_content)
         missing = []
         if not lead.get("website"):
             missing.append("no website provided")
@@ -133,3 +159,16 @@ class ResearchAgent(BaseAgent):
             "and prefix those sections with 'Based on available information...'."
         )
         return note
+
+    @staticmethod
+    def _build_citations(lead: Dict[str, Any], web_result=None) -> list[str]:
+        """Build a deduplicated citation list for transparency."""
+        citations = []
+        website = (lead.get("website") or "").strip()
+        if website:
+            citations.append(f"Website: {website}")
+        if lead.get("notes", "").strip():
+            citations.append("CRM Notes")
+        if web_result:
+            citations.extend(web_result.source_urls)
+        return list(dict.fromkeys(citations))
