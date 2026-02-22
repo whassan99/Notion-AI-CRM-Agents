@@ -66,6 +66,9 @@ class Config:
     NOTION_PROP_PRIORITY_TIER: str = os.getenv("NOTION_PROP_PRIORITY_TIER", "priority_tier")
     NOTION_PROP_PRIORITY_REASONING: str = os.getenv("NOTION_PROP_PRIORITY_REASONING", "priority_reasoning")
     NOTION_PROP_STALE_FLAG: str = os.getenv("NOTION_PROP_STALE_FLAG", "stale_flag")
+    NOTION_PROP_NEXT_ACTION: str = os.getenv("NOTION_PROP_NEXT_ACTION", "next_action")
+    NOTION_PROP_ACTION_REASONING: str = os.getenv("NOTION_PROP_ACTION_REASONING", "action_reasoning")
+    NOTION_PROP_ACTION_CONFIDENCE: str = os.getenv("NOTION_PROP_ACTION_CONFIDENCE", "action_confidence")
 
     @classmethod
     def validate(cls, require_notion: bool = True) -> bool:

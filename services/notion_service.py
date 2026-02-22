@@ -177,6 +177,9 @@ class NotionService:
             "priority_tier": Config.NOTION_PROP_PRIORITY_TIER,
             "priority_reasoning": Config.NOTION_PROP_PRIORITY_REASONING,
             "stale_flag": Config.NOTION_PROP_STALE_FLAG,
+            "next_action": Config.NOTION_PROP_NEXT_ACTION,
+            "action_reasoning": Config.NOTION_PROP_ACTION_REASONING,
+            "action_confidence": Config.NOTION_PROP_ACTION_CONFIDENCE,
         }
 
     def _map_output_property_names(self, properties: Dict[str, Any]) -> Dict[str, Any]:

@@ -14,7 +14,7 @@ from services.notion_service import NotionService
 from services.claude_service import ClaudeService
 from services.web_research_service import WebResearchService
 from services.notification_service import LeadSummary, SlackNotifier
-from agents import ICPAgent, ResearchAgent, PriorityAgent
+from agents import ICPAgent, ResearchAgent, PriorityAgent, ActionAgent
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +120,7 @@ def run_pipeline(
     icp_agent = ICPAgent(claude)
     research_agent = ResearchAgent(claude, web_research_service=web_research)
     priority_agent = PriorityAgent(claude)
+    action_agent = ActionAgent(claude)
 
     # Process each lead
     for i, lead in enumerate(leads, 1):
@@ -139,8 +140,14 @@ def run_pipeline(
             # Run Priority Agent
             priority_results = priority_agent.run(lead_enriched)
 
+            # Enrich lead for action recommendation
+            lead_with_priority = {**lead_enriched, **priority_results, **research_results}
+
+            # Run Action Agent
+            action_results = action_agent.run(lead_with_priority)
+
             # Combine all results
-            all_results = {**icp_results, **research_results, **priority_results}
+            all_results = {**icp_results, **research_results, **priority_results, **action_results}
 
             # Write back to Notion (skip in dry-run)
             if dry_run:

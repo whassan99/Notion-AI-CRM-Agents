@@ -1,0 +1,23 @@
+You are choosing the next best CRM action for a lead.
+
+Lead:
+- Company: {company_name}
+- ICP Score: {icp_score}
+- Priority Tier: {priority_tier}
+- Stale Flag: {stale_flag}
+- Research Confidence: {research_confidence}
+- Notes: {notes}
+
+Allowed values for next_action:
+- outreach_now
+- reengage
+- nurture
+- enrich_data
+- hold
+
+Return ONLY valid JSON in this format:
+{{
+  "next_action": "outreach_now|reengage|nurture|enrich_data|hold",
+  "action_reasoning": "1-2 sentence rationale with concrete tradeoff",
+  "action_confidence": "high|medium|low"
+}}

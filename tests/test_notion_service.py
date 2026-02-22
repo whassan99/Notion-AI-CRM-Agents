@@ -4,11 +4,13 @@ from config import Config
 
 def test_maps_canonical_output_keys_to_configured_names(monkeypatch):
     monkeypatch.setattr(Config, "NOTION_PROP_ICP_SCORE", "ICP Score")
+    monkeypatch.setattr(Config, "NOTION_PROP_NEXT_ACTION", "Next Action")
     service = NotionService(api_key="secret_test", database_id="dbid")
 
-    mapped = service._map_output_property_names({"icp_score": 91, "custom": "x"})
+    mapped = service._map_output_property_names({"icp_score": 91, "next_action": "outreach_now", "custom": "x"})
 
     assert mapped["ICP Score"] == 91
+    assert mapped["Next Action"] == "outreach_now"
     assert mapped["custom"] == "x"
 
 
