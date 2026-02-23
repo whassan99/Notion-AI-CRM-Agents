@@ -54,6 +54,10 @@ pip install -r requirements.txt
 ### 2. Configure environment
 
 ```bash
+# Recommended: guided setup (writes .env and can auto-create output columns)
+python main.py --setup
+
+# Or manual setup:
 cp .env.example .env
 ```
 

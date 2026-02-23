@@ -36,9 +36,10 @@ Create a new full-page database in Notion with these columns:
 | `Last Contacted` | Date | Recommended | When you last reached out (used for staleness) |
 | `Status` | Select | Optional | Current status (e.g., New, Contacted, Qualified) |
 
-#### Output Columns (created by agents)
+#### Output Columns (auto-created by setup wizard)
 
-Add these columns to your database — the agents will populate them:
+If you run `python main.py --setup` and choose schema bootstrap, these are created automatically.
+You can also add them manually if you prefer:
 
 | Column Name | Type | Purpose |
 |-------------|------|---------|
@@ -46,9 +47,15 @@ Add these columns to your database — the agents will populate them:
 | `confidence_score` | Number | How much data was available for scoring (0-100) |
 | `icp_reasoning` | Text | Why the lead got this score |
 | `research_brief` | Text | Market research summary |
-| `priority_tier` | Text | HIGH / MEDIUM / LOW / REVIEW |
+| `research_confidence` | Select | Research confidence (`high`, `medium`, `low`) |
+| `research_citations` | Text | Source list used for research |
+| `research_source_count` | Number | Number of sources used |
+| `priority_tier` | Select | HIGH / MEDIUM / LOW / REVIEW |
 | `priority_reasoning` | Text | Why this priority was assigned |
 | `stale_flag` | Checkbox | True if the lead hasn't been contacted recently |
+| `next_action` | Select | Suggested next step (`outreach_now`, etc.) |
+| `action_reasoning` | Text | Why that action was chosen |
+| `action_confidence` | Select | Action confidence (`high`, `medium`, `low`) |
 
 > **Tip:** You can rename columns to match your preferences by updating the `NOTION_PROP_*` variables in `.env`. See `.env.example` for details.
 

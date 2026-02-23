@@ -96,3 +96,54 @@ def test_extract_lead_includes_existing_results_and_last_edited_time():
     assert lead["existing_results"]["icp_score"] == 88
     assert lead["existing_results"]["priority_tier"] == "high"
     assert lead["existing_results"]["next_action"] == "outreach_now"
+
+
+def test_bootstrap_output_properties_creates_only_missing(monkeypatch):
+    service = NotionService(api_key="secret_test", database_id="dbid")
+    score_col = Config.NOTION_PROP_ICP_SCORE
+    priority_col = Config.NOTION_PROP_PRIORITY_TIER
+    next_action_col = Config.NOTION_PROP_NEXT_ACTION
+
+    service._database_properties_cache = {
+        score_col: {"type": "number"},
+    }
+    captured = {}
+
+    def _fake_update(props):
+        captured.update(props)
+
+    monkeypatch.setattr(service, "_update_database_properties", _fake_update)
+    monkeypatch.setattr(
+        service,
+        "_retrieve_database",
+        lambda: {"properties": {**service._database_properties_cache, **captured}},
+    )
+
+    created = service.bootstrap_output_properties()
+
+    assert score_col not in captured
+    assert priority_col in captured
+    assert next_action_col in captured
+    assert score_col not in created
+    assert priority_col in created
+    assert next_action_col in created
+
+
+def test_bootstrap_output_properties_noop_when_all_present(monkeypatch):
+    service = NotionService(api_key="secret_test", database_id="dbid")
+    full_schema = service._output_property_schema()
+    service._database_properties_cache = {
+        name: {"type": next(iter(spec.keys()))}
+        for name, spec in full_schema.items()
+    }
+    called = {"updated": False}
+
+    def _fake_update(_props):
+        called["updated"] = True
+
+    monkeypatch.setattr(service, "_update_database_properties", _fake_update)
+
+    created = service.bootstrap_output_properties()
+
+    assert created == []
+    assert not called["updated"]

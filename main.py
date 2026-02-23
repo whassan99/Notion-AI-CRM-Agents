@@ -2,6 +2,7 @@
 Main entry point for the Notion AI CRM Copilot.
 
 Usage:
+    python main.py --setup      # Run guided setup wizard
     python main.py              # Run full pipeline on all leads
     python main.py --limit 5    # Process only first 5 leads
     python main.py --dry-run    # Test with sample data, no Notion writes
@@ -16,6 +17,7 @@ import argparse
 
 from config import Config
 from pipeline import run_pipeline
+from setup_wizard import run_setup_wizard
 
 
 def main():
@@ -25,6 +27,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  python main.py --setup      Run guided setup wizard
   python main.py              Process all leads
   python main.py --limit 3    Process first 3 leads only
   python main.py --dry-run    Test with sample data (no Notion writes)
@@ -32,6 +35,11 @@ Examples:
   python main.py --full-refresh  Process all leads regardless of prior run state
   python main.py --slack      Post Slack summary after run
         """,
+    )
+    parser.add_argument(
+        "--setup",
+        action="store_true",
+        help="Run interactive setup wizard for .env and Notion schema bootstrap",
     )
     parser.add_argument(
         "--limit",
@@ -61,6 +69,9 @@ Examples:
     )
 
     args = parser.parse_args()
+
+    if args.setup:
+        sys.exit(run_setup_wizard())
 
     # Set up logging
     logging.basicConfig(

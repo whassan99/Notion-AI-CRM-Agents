@@ -187,6 +187,60 @@ class NotionService:
             "action_confidence": Config.NOTION_PROP_ACTION_CONFIDENCE,
         }
 
+    @staticmethod
+    def _output_property_schema() -> Dict[str, Dict[str, Any]]:
+        """Configured output property names -> Notion schema definitions."""
+        return {
+            Config.NOTION_PROP_ICP_SCORE: {"number": {"format": "number"}},
+            Config.NOTION_PROP_CONFIDENCE: {"number": {"format": "number"}},
+            Config.NOTION_PROP_ICP_REASONING: {"rich_text": {}},
+            Config.NOTION_PROP_RESEARCH_BRIEF: {"rich_text": {}},
+            Config.NOTION_PROP_RESEARCH_CONFIDENCE: {
+                "select": {
+                    "options": [
+                        {"name": "high", "color": "green"},
+                        {"name": "medium", "color": "yellow"},
+                        {"name": "low", "color": "red"},
+                    ]
+                }
+            },
+            Config.NOTION_PROP_RESEARCH_CITATIONS: {"rich_text": {}},
+            Config.NOTION_PROP_RESEARCH_SOURCE_COUNT: {"number": {"format": "number"}},
+            Config.NOTION_PROP_PRIORITY_TIER: {
+                "select": {
+                    "options": [
+                        {"name": "high", "color": "green"},
+                        {"name": "medium", "color": "yellow"},
+                        {"name": "low", "color": "red"},
+                        {"name": "review", "color": "gray"},
+                    ]
+                }
+            },
+            Config.NOTION_PROP_PRIORITY_REASONING: {"rich_text": {}},
+            Config.NOTION_PROP_STALE_FLAG: {"checkbox": {}},
+            Config.NOTION_PROP_NEXT_ACTION: {
+                "select": {
+                    "options": [
+                        {"name": "outreach_now", "color": "green"},
+                        {"name": "reengage", "color": "yellow"},
+                        {"name": "nurture", "color": "blue"},
+                        {"name": "enrich_data", "color": "orange"},
+                        {"name": "hold", "color": "gray"},
+                    ]
+                }
+            },
+            Config.NOTION_PROP_ACTION_REASONING: {"rich_text": {}},
+            Config.NOTION_PROP_ACTION_CONFIDENCE: {
+                "select": {
+                    "options": [
+                        {"name": "high", "color": "green"},
+                        {"name": "medium", "color": "yellow"},
+                        {"name": "low", "color": "red"},
+                    ]
+                }
+            },
+        }
+
     def _map_output_property_names(self, properties: Dict[str, Any]) -> Dict[str, Any]:
         """
         Convert canonical result keys to configured Notion property names.
@@ -202,6 +256,33 @@ class NotionService:
             prop = props.get(notion_prop_name)
             values[canonical_key] = self._read_property_value(prop) if prop else None
         return values
+
+    def bootstrap_output_properties(self) -> List[str]:
+        """
+        Create missing output properties in the configured Notion database.
+
+        Returns:
+            List of property names created.
+        """
+        db_props = self._get_database_properties()
+        schema = self._output_property_schema()
+        missing = {name: spec for name, spec in schema.items() if name not in db_props}
+
+        if not missing:
+            return []
+
+        self._update_database_properties(missing)
+        # Refresh cached schema so later writes use new columns immediately.
+        self._database_properties_cache = self._retrieve_database().get("properties", {})
+        return list(missing.keys())
+
+    @_retry
+    def _update_database_properties(self, properties: Dict[str, Any]) -> Dict[str, Any]:
+        """Patch database schema with new property definitions."""
+        return self.client.databases.update(
+            database_id=self.database_id,
+            properties=properties,
+        )
 
     def _get_database_properties(self) -> Dict[str, Dict[str, Any]]:
         """Get Notion database properties with lightweight caching."""
