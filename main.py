@@ -6,6 +6,7 @@ Usage:
     python main.py --limit 5    # Process only first 5 leads
     python main.py --dry-run    # Test with sample data, no Notion writes
     python main.py --no-web     # Disable web research
+    python main.py --full-refresh  # Ignore incremental state and process all leads
     python main.py --slack      # Post a run summary to Slack when done
 """
 
@@ -28,6 +29,7 @@ Examples:
   python main.py --limit 3    Process first 3 leads only
   python main.py --dry-run    Test with sample data (no Notion writes)
   python main.py --no-web     Disable web research
+  python main.py --full-refresh  Process all leads regardless of prior run state
   python main.py --slack      Post Slack summary after run
         """,
     )
@@ -51,6 +53,11 @@ Examples:
         "--slack",
         action="store_true",
         help="Post a run summary to Slack after the pipeline completes (requires SLACK_WEBHOOK_URL)",
+    )
+    parser.add_argument(
+        "--full-refresh",
+        action="store_true",
+        help="Ignore incremental run state and process all leads",
     )
 
     args = parser.parse_args()
@@ -76,6 +83,7 @@ Examples:
             dry_run=args.dry_run,
             no_web=args.no_web,
             notify_slack=args.slack,
+            full_refresh=args.full_refresh,
         )
         if result.failed and not result.succeeded:
             sys.exit(1)

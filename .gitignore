@@ -16,6 +16,7 @@ build/
 agent_results.json
 *.log
 logs/
+.pipeline_state.json
 
 # OS
 .DS_Store

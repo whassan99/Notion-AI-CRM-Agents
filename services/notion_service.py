@@ -159,6 +159,8 @@ class NotionService:
             "notes": self._get_rich_text(props.get(Config.NOTION_PROP_NOTES, {})),
             "last_contacted": self._get_date(props.get(Config.NOTION_PROP_LAST_CONTACTED, {})),
             "status": self._get_select(props.get(Config.NOTION_PROP_STATUS, {})),
+            "last_edited_time": page.get("last_edited_time"),
+            "existing_results": self._extract_existing_results(props),
         }
 
     def _prepare_update_properties(self, properties: Dict[str, Any]) -> Dict:
@@ -192,6 +194,14 @@ class NotionService:
         """
         key_map = self._output_property_map()
         return {key_map.get(key, key): value for key, value in properties.items()}
+
+    def _extract_existing_results(self, props: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract existing output values from a Notion row into canonical keys."""
+        values: Dict[str, Any] = {}
+        for canonical_key, notion_prop_name in self._output_property_map().items():
+            prop = props.get(notion_prop_name)
+            values[canonical_key] = self._read_property_value(prop) if prop else None
+        return values
 
     def _get_database_properties(self) -> Dict[str, Dict[str, Any]]:
         """Get Notion database properties with lightweight caching."""
@@ -242,6 +252,33 @@ class NotionService:
         return notion_props
 
     # --- Property helpers ---
+
+    @staticmethod
+    def _read_property_value(prop: Dict[str, Any]) -> Any:
+        """Return a simple Python value from a Notion property object."""
+        prop_type = prop.get("type")
+        if prop_type == "number":
+            return prop.get("number")
+        if prop_type == "checkbox":
+            return prop.get("checkbox")
+        if prop_type == "select":
+            select_obj = prop.get("select")
+            return select_obj.get("name") if select_obj else None
+        if prop_type == "status":
+            status_obj = prop.get("status")
+            return status_obj.get("name") if status_obj else None
+        if prop_type == "url":
+            return prop.get("url")
+        if prop_type == "date":
+            date_obj = prop.get("date")
+            return date_obj.get("start") if date_obj else None
+        if prop_type == "title":
+            return " ".join(item.get("plain_text", "") for item in prop.get("title", [])).strip()
+        if prop_type == "rich_text":
+            return " ".join(item.get("plain_text", "") for item in prop.get("rich_text", [])).strip()
+        if prop_type == "multi_select":
+            return [item.get("name", "") for item in prop.get("multi_select", []) if item.get("name")]
+        return None
 
     @staticmethod
     def _get_title(prop: Dict) -> str:

@@ -76,7 +76,12 @@ python main.py --limit 3
 
 # Process all leads
 python main.py
+
+# Force a full refresh (ignore incremental state)
+python main.py --full-refresh
 ```
+
+By default, runs are incremental: unchanged leads that already have core outputs are skipped.
 
 ## Lightweight Evaluation
 
@@ -130,6 +135,8 @@ HIGH_RECENCY_MAX=10
 LOW_ICP_MAX=40
 LOW_STALE_DAYS=45
 STALE_DAYS_THRESHOLD=14
+INCREMENTAL_ENABLED=true
+PIPELINE_STATE_FILE=.pipeline_state.json
 ```
 
 Optional: map custom Notion column names:

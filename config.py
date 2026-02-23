@@ -38,6 +38,10 @@ class Config:
     WEB_RESEARCH_DELAY: float = float(os.getenv("WEB_RESEARCH_DELAY", "1.0"))
     WEB_RESEARCH_MAX_PAGES: int = int(os.getenv("WEB_RESEARCH_MAX_PAGES", "3"))
 
+    # --- Incremental Processing ---
+    INCREMENTAL_ENABLED: bool = os.getenv("INCREMENTAL_ENABLED", "true").lower() in ("true", "1", "yes")
+    PIPELINE_STATE_FILE: str = os.getenv("PIPELINE_STATE_FILE", ".pipeline_state.json")
+
     # --- ICP Criteria (injected into prompt) ---
     ICP_CRITERIA: str = os.getenv(
         "ICP_CRITERIA",
