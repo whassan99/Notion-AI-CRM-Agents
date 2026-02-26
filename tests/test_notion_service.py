@@ -6,15 +6,23 @@ def test_maps_canonical_output_keys_to_configured_names(monkeypatch):
     monkeypatch.setattr(Config, "NOTION_PROP_ICP_SCORE", "ICP Score")
     monkeypatch.setattr(Config, "NOTION_PROP_NEXT_ACTION", "Next Action")
     monkeypatch.setattr(Config, "NOTION_PROP_RESEARCH_CONFIDENCE", "Research Confidence")
+    monkeypatch.setattr(Config, "NOTION_PROP_RESEARCH_PROVIDERS", "Research Providers")
     service = NotionService(api_key="secret_test", database_id="dbid")
 
     mapped = service._map_output_property_names(
-        {"icp_score": 91, "next_action": "outreach_now", "research_confidence": "high", "custom": "x"}
+        {
+            "icp_score": 91,
+            "next_action": "outreach_now",
+            "research_confidence": "high",
+            "research_providers": "website:success",
+            "custom": "x",
+        }
     )
 
     assert mapped["ICP Score"] == 91
     assert mapped["Next Action"] == "outreach_now"
     assert mapped["Research Confidence"] == "high"
+    assert mapped["Research Providers"] == "website:success"
     assert mapped["custom"] == "x"
 
 

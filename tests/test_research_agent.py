@@ -24,6 +24,10 @@ def test_research_agent_adds_sources_section_and_citations():
         search_results="Search facts",
         pages_fetched=2,
         source_urls=["https://example.com", "https://news.example/item"],
+        provider_trace=[
+            {"provider": "website", "status": "success", "chars": 1200},
+            {"provider": "brave", "status": "success", "chars": 500, "source_count": 2},
+        ],
     )
     agent = ResearchAgent(_StubClaude(), web_research_service=_StubWebResearch(web_result))
     result = agent.run(
@@ -38,6 +42,8 @@ def test_research_agent_adds_sources_section_and_citations():
     assert "https://example.com" in result["research_brief"]
     assert result["research_source_count"] >= 2
     assert "CRM Notes" in result["research_citations"]
+    assert "website:success" in result["research_providers"]
+    assert "brave:success" in result["research_providers"]
 
 
 def test_research_confidence_high_with_rich_evidence():
@@ -68,3 +74,4 @@ def test_research_confidence_low_with_minimal_data():
         }
     )
     assert result["research_confidence"] == "low"
+    assert result["research_providers"] == ""

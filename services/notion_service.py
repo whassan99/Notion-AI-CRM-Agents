@@ -179,6 +179,7 @@ class NotionService:
             "research_confidence": Config.NOTION_PROP_RESEARCH_CONFIDENCE,
             "research_citations": Config.NOTION_PROP_RESEARCH_CITATIONS,
             "research_source_count": Config.NOTION_PROP_RESEARCH_SOURCE_COUNT,
+            "research_providers": Config.NOTION_PROP_RESEARCH_PROVIDERS,
             "priority_tier": Config.NOTION_PROP_PRIORITY_TIER,
             "priority_reasoning": Config.NOTION_PROP_PRIORITY_REASONING,
             "stale_flag": Config.NOTION_PROP_STALE_FLAG,
@@ -206,6 +207,7 @@ class NotionService:
             },
             Config.NOTION_PROP_RESEARCH_CITATIONS: {"rich_text": {}},
             Config.NOTION_PROP_RESEARCH_SOURCE_COUNT: {"number": {"format": "number"}},
+            Config.NOTION_PROP_RESEARCH_PROVIDERS: {"rich_text": {}},
             Config.NOTION_PROP_PRIORITY_TIER: {
                 "select": {
                     "options": [

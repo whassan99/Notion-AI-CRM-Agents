@@ -56,6 +56,7 @@ class ResearchAgent(BaseAgent):
         confidence = self._assess_data_quality(lead, web_result)
         quality_note = self._quality_note(lead, confidence, web_result)
         citations = self._build_citations(lead, web_result)
+        providers_used = self._format_provider_trace(web_result)
 
         prompt = self.prompt_template.format(
             company_name=lead.get("company_name", "N/A"),
@@ -88,6 +89,7 @@ class ResearchAgent(BaseAgent):
             "research_confidence": confidence,
             "research_citations": "\n".join(f"- {c}" for c in citations),
             "research_source_count": len(citations),
+            "research_providers": providers_used,
         }
 
     @staticmethod
@@ -172,3 +174,31 @@ class ResearchAgent(BaseAgent):
         if web_result:
             citations.extend(web_result.source_urls)
         return list(dict.fromkeys(citations))
+
+    @staticmethod
+    def _format_provider_trace(web_result=None) -> str:
+        """Render provider execution trace for auditability in Notion."""
+        if not web_result or not getattr(web_result, "provider_trace", None):
+            return ""
+        lines = []
+        for item in web_result.provider_trace:
+            provider = str(item.get("provider", "unknown"))
+            status = str(item.get("status", "unknown"))
+            parts = [f"{provider}:{status}"]
+            reason = item.get("reason")
+            if reason:
+                parts.append(f"reason={reason}")
+            chars = item.get("chars")
+            if isinstance(chars, int):
+                parts.append(f"chars={chars}")
+            source_count = item.get("source_count")
+            if isinstance(source_count, int):
+                parts.append(f"sources={source_count}")
+            pages_fetched = item.get("pages_fetched")
+            if isinstance(pages_fetched, int):
+                parts.append(f"pages={pages_fetched}")
+            target_chars = item.get("target_chars")
+            if isinstance(target_chars, int):
+                parts.append(f"target={target_chars}")
+            lines.append(" | ".join(parts))
+        return "\n".join(lines)

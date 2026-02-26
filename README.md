@@ -109,7 +109,8 @@ By default, runs are incremental: unchanged leads that already have core outputs
 - Produces a short lead research brief.
 - Flags lower-quality inputs and marks speculative reasoning.
 - Appends source citations (website/search/CRM notes) for auditability.
-- Outputs `research_confidence` and `research_source_count`.
+- Uses a configurable enrichment waterfall (website -> Brave search by default).
+- Outputs `research_confidence`, `research_source_count`, and `research_providers`.
 
 ### Prioritization Agent
 
@@ -151,9 +152,17 @@ NOTION_PROP_WEBSITE=Website
 NOTION_PROP_NOTES=Notes
 ```
 
+Web research waterfall controls:
+
+```dotenv
+WEB_RESEARCH_WATERFALL=website,brave
+WEB_RESEARCH_TARGET_CHARS=4000
+WEB_RESEARCH_RUN_ALL_PROVIDERS=false
+```
+
 ## Limitations
 
-- No live web browsing or scraping; research uses provided CRM data and model knowledge.
+- Web research is lightweight and may miss JS-rendered pages or blocked content.
 - ICP quality depends on how clear your ICP criteria are.
 - Large Notion batches can be slow due to API limits.
 - AI output can be wrong or incomplete; verify important decisions manually.

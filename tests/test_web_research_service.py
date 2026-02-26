@@ -338,3 +338,53 @@ class TestBraveSearch:
         assert "T1" in text
         assert "T2" in text
         assert urls == ["https://a.example", "https://b.example"]
+
+
+class TestWaterfallBehavior:
+    """Test provider waterfall stop/continue logic."""
+
+    @patch.object(WebResearchService, "_scrape_website", return_value="x" * 5000)
+    @patch.object(WebResearchService, "_brave_search", return_value=("Brave details", ["https://b.example"]))
+    def test_stops_after_threshold_when_run_all_disabled(self, mock_brave, _mock_scrape):
+        service = WebResearchService(
+            timeout=5,
+            delay=0,
+            brave_api_key="test-key",
+            provider_order=["website", "brave"],
+            target_chars=1000,
+            run_all_providers=False,
+        )
+        result = service.research_lead(
+            {"company_name": "Acme", "website": "https://example.com"}
+        )
+
+        mock_brave.assert_not_called()
+        assert result.website_content
+        assert result.search_results == ""
+        assert any(
+            item.get("provider") == "waterfall"
+            and item.get("status") == "stop_threshold_reached"
+            for item in result.provider_trace
+        )
+
+    @patch.object(WebResearchService, "_scrape_website", return_value="x" * 5000)
+    @patch.object(WebResearchService, "_brave_search", return_value=("Brave details", ["https://b.example"]))
+    def test_run_all_executes_all_providers(self, mock_brave, _mock_scrape):
+        service = WebResearchService(
+            timeout=5,
+            delay=0,
+            brave_api_key="test-key",
+            provider_order=["website", "brave"],
+            target_chars=1000,
+            run_all_providers=True,
+        )
+        result = service.research_lead(
+            {"company_name": "Acme", "website": "https://example.com"}
+        )
+
+        mock_brave.assert_called_once_with("Acme")
+        assert "Brave details" in result.search_results
+
+    def test_parse_provider_order_filters_unknown_and_duplicates(self):
+        order = WebResearchService._parse_provider_order("website,unknown,brave,website")
+        assert order == ["website", "brave"]

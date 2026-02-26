@@ -37,6 +37,12 @@ class Config:
     WEB_RESEARCH_TIMEOUT: int = int(os.getenv("WEB_RESEARCH_TIMEOUT", "10"))
     WEB_RESEARCH_DELAY: float = float(os.getenv("WEB_RESEARCH_DELAY", "1.0"))
     WEB_RESEARCH_MAX_PAGES: int = int(os.getenv("WEB_RESEARCH_MAX_PAGES", "3"))
+    WEB_RESEARCH_WATERFALL: str = os.getenv("WEB_RESEARCH_WATERFALL", "website,brave")
+    WEB_RESEARCH_TARGET_CHARS: int = int(os.getenv("WEB_RESEARCH_TARGET_CHARS", "4000"))
+    WEB_RESEARCH_RUN_ALL_PROVIDERS: bool = os.getenv(
+        "WEB_RESEARCH_RUN_ALL_PROVIDERS",
+        "false",
+    ).lower() in ("true", "1", "yes")
 
     # --- Incremental Processing ---
     INCREMENTAL_ENABLED: bool = os.getenv("INCREMENTAL_ENABLED", "true").lower() in ("true", "1", "yes")
@@ -76,6 +82,7 @@ class Config:
     NOTION_PROP_RESEARCH_CONFIDENCE: str = os.getenv("NOTION_PROP_RESEARCH_CONFIDENCE", "research_confidence")
     NOTION_PROP_RESEARCH_CITATIONS: str = os.getenv("NOTION_PROP_RESEARCH_CITATIONS", "research_citations")
     NOTION_PROP_RESEARCH_SOURCE_COUNT: str = os.getenv("NOTION_PROP_RESEARCH_SOURCE_COUNT", "research_source_count")
+    NOTION_PROP_RESEARCH_PROVIDERS: str = os.getenv("NOTION_PROP_RESEARCH_PROVIDERS", "research_providers")
 
     @classmethod
     def validate(cls, require_notion: bool = True) -> bool:

@@ -26,6 +26,7 @@ _MAX_CONTENT_CHARS = 12_000
 
 # Subpages to try scraping beyond the homepage
 _SUBPAGES = ["/about", "/pricing", "/blog"]
+_SUPPORTED_PROVIDERS = ("website", "brave")
 
 
 class WebResearchResult:
@@ -37,12 +38,14 @@ class WebResearchResult:
         search_results: str = "",
         pages_fetched: int = 0,
         source_urls: Optional[List[str]] = None,
+        provider_trace: Optional[List[Dict[str, Any]]] = None,
         errors: Optional[List[str]] = None,
     ):
         self.website_content = website_content
         self.search_results = search_results
         self.pages_fetched = pages_fetched
         self.source_urls = source_urls or []
+        self.provider_trace = provider_trace or []
         self.errors = errors or []
 
     @property
@@ -75,11 +78,29 @@ class WebResearchService:
         delay: Optional[float] = None,
         max_pages: Optional[int] = None,
         brave_api_key: Optional[str] = None,
+        provider_order: Optional[List[str]] = None,
+        target_chars: Optional[int] = None,
+        run_all_providers: Optional[bool] = None,
     ):
         self.timeout = timeout if timeout is not None else Config.WEB_RESEARCH_TIMEOUT
         self.delay = delay if delay is not None else Config.WEB_RESEARCH_DELAY
         self.max_pages = max_pages if max_pages is not None else Config.WEB_RESEARCH_MAX_PAGES
         self.brave_api_key = brave_api_key if brave_api_key is not None else Config.BRAVE_SEARCH_API_KEY
+        self.provider_order = (
+            provider_order
+            if provider_order is not None
+            else self._parse_provider_order(Config.WEB_RESEARCH_WATERFALL)
+        )
+        self.target_chars = (
+            target_chars
+            if target_chars is not None
+            else Config.WEB_RESEARCH_TARGET_CHARS
+        )
+        self.run_all_providers = (
+            run_all_providers
+            if run_all_providers is not None
+            else Config.WEB_RESEARCH_RUN_ALL_PROVIDERS
+        )
         self._cache: Dict[str, str] = {}
         self._robot_parsers: Dict[str, urllib.robotparser.RobotFileParser] = {}
         self._request_count = 0
@@ -96,27 +117,112 @@ class WebResearchService:
 
         website = lead.get("website", "")
         company_name = lead.get("company_name", "")
+        for provider in self.provider_order:
+            if provider == "website":
+                self._run_website_provider(result, website)
+            elif provider == "brave":
+                self._run_brave_provider(result, company_name)
 
-        # Scrape website if available
-        if website:
-            url = self._normalize_url(website)
-            content = self._scrape_website(url)
-            if content:
-                result.website_content = self._truncate(content)
-                result.pages_fetched = self._request_count
-                result.source_urls.append(url)
-
-        # Run Brave search if API key is configured
-        if self.brave_api_key and company_name:
-            search_content, search_urls = self._brave_search(company_name)
-            if search_content:
-                result.search_results = search_content
-                result.source_urls.extend(search_urls)
+            if (
+                not self.run_all_providers
+                and self._combined_chars(result) >= self.target_chars
+            ):
+                result.provider_trace.append(
+                    {
+                        "provider": "waterfall",
+                        "status": "stop_threshold_reached",
+                        "combined_chars": self._combined_chars(result),
+                        "target_chars": self.target_chars,
+                    }
+                )
+                break
 
         # Deduplicate while preserving order
         result.source_urls = list(dict.fromkeys(result.source_urls))
 
         return result
+
+    def _run_website_provider(self, result: WebResearchResult, website: str) -> None:
+        if not website:
+            result.provider_trace.append(
+                {"provider": "website", "status": "skipped", "reason": "missing_website"}
+            )
+            return
+        try:
+            url = self._normalize_url(website)
+            content = self._scrape_website(url)
+            if content:
+                truncated = self._truncate(content)
+                result.website_content = truncated
+                result.pages_fetched = self._request_count
+                result.source_urls.append(url)
+                result.provider_trace.append(
+                    {
+                        "provider": "website",
+                        "status": "success",
+                        "chars": len(truncated),
+                        "pages_fetched": result.pages_fetched,
+                    }
+                )
+                return
+            result.provider_trace.append(
+                {"provider": "website", "status": "no_content"}
+            )
+        except Exception as exc:
+            logger.warning("Website provider failed for %s: %s", website, exc)
+            result.errors.append(f"website provider failed: {exc}")
+            result.provider_trace.append(
+                {"provider": "website", "status": "error", "error": str(exc)}
+            )
+
+    def _run_brave_provider(self, result: WebResearchResult, company_name: str) -> None:
+        if not self.brave_api_key:
+            result.provider_trace.append(
+                {"provider": "brave", "status": "skipped", "reason": "missing_api_key"}
+            )
+            return
+        if not company_name:
+            result.provider_trace.append(
+                {"provider": "brave", "status": "skipped", "reason": "missing_company_name"}
+            )
+            return
+
+        try:
+            search_content, search_urls = self._brave_search(company_name)
+            if search_content:
+                result.search_results = search_content
+                result.source_urls.extend(search_urls)
+                result.provider_trace.append(
+                    {
+                        "provider": "brave",
+                        "status": "success",
+                        "chars": len(search_content),
+                        "source_count": len(search_urls),
+                    }
+                )
+                return
+            result.provider_trace.append(
+                {"provider": "brave", "status": "no_content"}
+            )
+        except Exception as exc:
+            logger.warning("Brave provider failed for %s: %s", company_name, exc)
+            result.errors.append(f"brave provider failed: {exc}")
+            result.provider_trace.append(
+                {"provider": "brave", "status": "error", "error": str(exc)}
+            )
+
+    @staticmethod
+    def _combined_chars(result: WebResearchResult) -> int:
+        return len(result.website_content or "") + len(result.search_results or "")
+
+    @staticmethod
+    def _parse_provider_order(raw: str) -> List[str]:
+        providers = []
+        for item in (raw or "").split(","):
+            normalized = item.strip().lower()
+            if normalized in _SUPPORTED_PROVIDERS and normalized not in providers:
+                providers.append(normalized)
+        return providers or ["website", "brave"]
 
     @staticmethod
     def _normalize_url(url: str) -> str:
