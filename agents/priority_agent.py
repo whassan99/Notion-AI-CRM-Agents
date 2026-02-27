@@ -44,6 +44,13 @@ class PriorityAgent(BaseAgent):
             }
 
         tier, reasoning = self._determine_priority(lead, icp_score, days)
+        tier, reasoning = self._apply_signal_boost(
+            tier=tier,
+            reasoning=reasoning,
+            icp_score=icp_score,
+            signal_type=str(lead.get("signal_type", "none")).lower(),
+            signal_strength=str(lead.get("signal_strength", "none")).lower(),
+        )
 
         logger.info(
             "Priority for %s: %s (ICP=%s, days=%d%s)",
@@ -121,6 +128,33 @@ class PriorityAgent(BaseAgent):
         # Fallback if JSON parse fails
         logger.warning("Could not parse priority JSON — defaulting to medium")
         return "medium", "Could not parse LLM response; defaulting to medium."
+
+    @staticmethod
+    def _apply_signal_boost(
+        tier: str,
+        reasoning: str,
+        icp_score: int,
+        signal_type: str,
+        signal_strength: str,
+    ) -> tuple[str, str]:
+        """
+        Boost priority by one tier when strong trigger signals are present.
+
+        Guardrail: never boost leads already considered a weak ICP fit.
+        """
+        if tier not in ("low", "medium"):
+            return tier, reasoning
+        if signal_strength != "high":
+            return tier, reasoning
+        if icp_score <= Config.LOW_ICP_MAX:
+            return tier, reasoning
+
+        boosted = "medium" if tier == "low" else "high"
+        signal_label = signal_type if signal_type and signal_type != "none" else "trigger"
+        updated_reasoning = (
+            f"{reasoning} Boosted from {tier} to {boosted} due to strong {signal_label} signal."
+        )
+        return boosted, updated_reasoning
 
     @staticmethod
     def _calculate_days_since_contact(last_contacted: str) -> int:

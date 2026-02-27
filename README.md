@@ -5,11 +5,13 @@ AI agents that turn raw Notion leads into scored, researched, and prioritized op
 
 ## Description
 
-Notion AI CRM Copilot reads leads from a Notion database, runs 3 focused AI agents, and writes insights back to Notion:
+Notion AI CRM Copilot reads leads from a Notion database, runs focused AI agents, and writes insights back to Notion:
 
 - ICP Scoring Agent: scores lead fit (0-100) with confidence.
 - Market Research Agent: generates a concise research brief.
+- Signal Agent: detects trigger events and intent signals.
 - Prioritization Agent: assigns `high`, `medium`, `low`, or `review`.
+- Action Agent: recommends the next best step.
 
 The system is designed to be practical and transparent: configurable thresholds, clear outputs, and graceful handling of missing data.
 
@@ -112,10 +114,20 @@ By default, runs are incremental: unchanged leads that already have core outputs
 - Uses a configurable enrichment waterfall (website -> Brave search by default).
 - Outputs `research_confidence`, `research_source_count`, and `research_providers`.
 
+### Signal Agent
+
+- Detects trigger signals from notes/research context.
+- Produces:
+  - `signal_type`
+  - `signal_strength`
+  - `signal_date`
+  - `signal_reasoning`
+
 ### Prioritization Agent
 
 - Uses deterministic rules for obvious cases.
 - Uses the LLM for edge cases.
+- Applies a one-tier boost for strong signals (`high`) when ICP fit is not weak.
 - Produces:
   - `priority_tier`
   - `priority_reasoning`

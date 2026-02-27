@@ -51,6 +51,10 @@ You can also add them manually if you prefer:
 | `research_citations` | Text | Source list used for research |
 | `research_source_count` | Number | Number of sources used |
 | `research_providers` | Text | Provider trace (which enrichment steps ran) |
+| `signal_type` | Select | Primary detected trigger signal (`funding`, `buying_intent`, etc.) |
+| `signal_strength` | Select | Trigger strength (`high`, `medium`, `low`, `none`) |
+| `signal_date` | Date | Date associated with the signal (if available) |
+| `signal_reasoning` | Text | Why this signal was detected |
 | `priority_tier` | Select | HIGH / MEDIUM / LOW / REVIEW |
 | `priority_reasoning` | Text | Why this priority was assigned |
 | `stale_flag` | Checkbox | True if the lead hasn't been contacted recently |

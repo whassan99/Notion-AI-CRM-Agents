@@ -46,6 +46,20 @@ class _StubResearchAgent:
             "research_confidence": "high",
             "research_citations": "",
             "research_source_count": 0,
+            "research_providers": "website:success",
+        }
+
+
+class _StubSignalAgent:
+    def __init__(self, _claude):
+        pass
+
+    def run(self, _lead):
+        return {
+            "signal_type": "funding",
+            "signal_strength": "high",
+            "signal_date": "2026-02-20",
+            "signal_reasoning": "Detected funding signal.",
         }
 
 
@@ -95,6 +109,7 @@ def _patch_pipeline_dependencies(monkeypatch, notion_stub):
     monkeypatch.setattr(pipeline_module, "ClaudeService", _StubClaudeService)
     monkeypatch.setattr(pipeline_module, "ICPAgent", _StubICPAgent)
     monkeypatch.setattr(pipeline_module, "ResearchAgent", _StubResearchAgent)
+    monkeypatch.setattr(pipeline_module, "SignalAgent", _StubSignalAgent)
     monkeypatch.setattr(pipeline_module, "PriorityAgent", _StubPriorityAgent)
     monkeypatch.setattr(pipeline_module, "ActionAgent", _StubActionAgent)
 

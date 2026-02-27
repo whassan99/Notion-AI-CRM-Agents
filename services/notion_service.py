@@ -180,6 +180,10 @@ class NotionService:
             "research_citations": Config.NOTION_PROP_RESEARCH_CITATIONS,
             "research_source_count": Config.NOTION_PROP_RESEARCH_SOURCE_COUNT,
             "research_providers": Config.NOTION_PROP_RESEARCH_PROVIDERS,
+            "signal_type": Config.NOTION_PROP_SIGNAL_TYPE,
+            "signal_strength": Config.NOTION_PROP_SIGNAL_STRENGTH,
+            "signal_date": Config.NOTION_PROP_SIGNAL_DATE,
+            "signal_reasoning": Config.NOTION_PROP_SIGNAL_REASONING,
             "priority_tier": Config.NOTION_PROP_PRIORITY_TIER,
             "priority_reasoning": Config.NOTION_PROP_PRIORITY_REASONING,
             "stale_flag": Config.NOTION_PROP_STALE_FLAG,
@@ -208,6 +212,30 @@ class NotionService:
             Config.NOTION_PROP_RESEARCH_CITATIONS: {"rich_text": {}},
             Config.NOTION_PROP_RESEARCH_SOURCE_COUNT: {"number": {"format": "number"}},
             Config.NOTION_PROP_RESEARCH_PROVIDERS: {"rich_text": {}},
+            Config.NOTION_PROP_SIGNAL_TYPE: {
+                "select": {
+                    "options": [
+                        {"name": "buying_intent", "color": "green"},
+                        {"name": "funding", "color": "blue"},
+                        {"name": "leadership_change", "color": "purple"},
+                        {"name": "hiring", "color": "yellow"},
+                        {"name": "technology_initiative", "color": "orange"},
+                        {"name": "none", "color": "gray"},
+                    ]
+                }
+            },
+            Config.NOTION_PROP_SIGNAL_STRENGTH: {
+                "select": {
+                    "options": [
+                        {"name": "high", "color": "green"},
+                        {"name": "medium", "color": "yellow"},
+                        {"name": "low", "color": "red"},
+                        {"name": "none", "color": "gray"},
+                    ]
+                }
+            },
+            Config.NOTION_PROP_SIGNAL_DATE: {"date": {}},
+            Config.NOTION_PROP_SIGNAL_REASONING: {"rich_text": {}},
             Config.NOTION_PROP_PRIORITY_TIER: {
                 "select": {
                     "options": [

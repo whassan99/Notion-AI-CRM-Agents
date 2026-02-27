@@ -1,7 +1,7 @@
 """
 Pipeline orchestrator for the Notion AI CRM Copilot.
 
-Fetches leads from Notion, runs AI agents (ICP, Research, Priority),
+Fetches leads from Notion, runs AI agents (ICP, Research, Signals, Priority),
 and writes results back. Supports dry-run mode and result tracking.
 """
 
@@ -17,7 +17,7 @@ from services.notion_service import NotionService
 from services.claude_service import ClaudeService
 from services.web_research_service import WebResearchService
 from services.notification_service import LeadSummary, SlackNotifier
-from agents import ICPAgent, ResearchAgent, PriorityAgent, ActionAgent
+from agents import ICPAgent, ResearchAgent, SignalAgent, PriorityAgent, ActionAgent
 
 logger = logging.getLogger(__name__)
 _REQUIRED_RESULT_KEYS = ("icp_score", "priority_tier", "next_action")
@@ -251,6 +251,7 @@ def run_pipeline(
     # Initialize agents
     icp_agent = ICPAgent(claude)
     research_agent = ResearchAgent(claude, web_research_service=web_research)
+    signal_agent = SignalAgent(claude)
     priority_agent = PriorityAgent(claude)
     action_agent = ActionAgent(claude)
 
@@ -266,10 +267,12 @@ def run_pipeline(
             # Run Research Agent
             research_results = research_agent.run(lead)
 
-            # Enrich lead with ICP score for priority agent
-            lead_enriched = {**lead, **icp_results}
+            # Run Signal Agent
+            lead_with_research = {**lead, **research_results}
+            signal_results = signal_agent.run(lead_with_research)
 
-            # Run Priority Agent
+            # Enrich lead with context for priority scoring
+            lead_enriched = {**lead, **icp_results, **research_results, **signal_results}
             priority_results = priority_agent.run(lead_enriched)
 
             # Enrich lead for action recommendation
@@ -279,7 +282,13 @@ def run_pipeline(
             action_results = action_agent.run(lead_with_priority)
 
             # Combine all results
-            all_results = {**icp_results, **research_results, **priority_results, **action_results}
+            all_results = {
+                **icp_results,
+                **research_results,
+                **signal_results,
+                **priority_results,
+                **action_results,
+            }
 
             # Write back to Notion (skip in dry-run)
             if dry_run:

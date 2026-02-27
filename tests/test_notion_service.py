@@ -7,6 +7,7 @@ def test_maps_canonical_output_keys_to_configured_names(monkeypatch):
     monkeypatch.setattr(Config, "NOTION_PROP_NEXT_ACTION", "Next Action")
     monkeypatch.setattr(Config, "NOTION_PROP_RESEARCH_CONFIDENCE", "Research Confidence")
     monkeypatch.setattr(Config, "NOTION_PROP_RESEARCH_PROVIDERS", "Research Providers")
+    monkeypatch.setattr(Config, "NOTION_PROP_SIGNAL_TYPE", "Signal Type")
     service = NotionService(api_key="secret_test", database_id="dbid")
 
     mapped = service._map_output_property_names(
@@ -15,6 +16,7 @@ def test_maps_canonical_output_keys_to_configured_names(monkeypatch):
             "next_action": "outreach_now",
             "research_confidence": "high",
             "research_providers": "website:success",
+            "signal_type": "funding",
             "custom": "x",
         }
     )
@@ -23,6 +25,7 @@ def test_maps_canonical_output_keys_to_configured_names(monkeypatch):
     assert mapped["Next Action"] == "outreach_now"
     assert mapped["Research Confidence"] == "high"
     assert mapped["Research Providers"] == "website:success"
+    assert mapped["Signal Type"] == "funding"
     assert mapped["custom"] == "x"
 
 

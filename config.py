@@ -83,6 +83,10 @@ class Config:
     NOTION_PROP_RESEARCH_CITATIONS: str = os.getenv("NOTION_PROP_RESEARCH_CITATIONS", "research_citations")
     NOTION_PROP_RESEARCH_SOURCE_COUNT: str = os.getenv("NOTION_PROP_RESEARCH_SOURCE_COUNT", "research_source_count")
     NOTION_PROP_RESEARCH_PROVIDERS: str = os.getenv("NOTION_PROP_RESEARCH_PROVIDERS", "research_providers")
+    NOTION_PROP_SIGNAL_TYPE: str = os.getenv("NOTION_PROP_SIGNAL_TYPE", "signal_type")
+    NOTION_PROP_SIGNAL_STRENGTH: str = os.getenv("NOTION_PROP_SIGNAL_STRENGTH", "signal_strength")
+    NOTION_PROP_SIGNAL_DATE: str = os.getenv("NOTION_PROP_SIGNAL_DATE", "signal_date")
+    NOTION_PROP_SIGNAL_REASONING: str = os.getenv("NOTION_PROP_SIGNAL_REASONING", "signal_reasoning")
 
     @classmethod
     def validate(cls, require_notion: bool = True) -> bool:
