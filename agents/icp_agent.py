@@ -77,20 +77,51 @@ class ICPAgent(BaseAgent):
         # Extract and clamp dimension scores
         dim_scores = {}
         total = 0
+        raw_dims = data.get("dimension_scores")
+        has_dimensions = isinstance(raw_dims, dict) and any(
+            raw_dims.get(d) is not None for d in DIMENSIONS
+        )
         for dim in DIMENSIONS:
-            score = data.get("dimension_scores", {}).get(dim, 0)
+            score = (raw_dims or {}).get(dim, 0)
             score = int(self._clamp(score, 0, 20))
             dim_scores[dim] = score
             total += score
 
-        icp_score = int(self._clamp(data.get("icp_score", total), 0, 100))
+        llm_total = data.get("icp_score")
+        if has_dimensions:
+            # Prefer calculated sum — it's verifiable
+            if llm_total is not None and int(self._clamp(llm_total, 0, 100)) != total:
+                logger.warning(
+                    "ICP score mismatch: LLM said %s but dimensions sum to %d — using sum",
+                    llm_total,
+                    total,
+                )
+            icp_score = int(self._clamp(total, 0, 100))
+        else:
+            # No dimensions provided — use LLM total if available
+            if llm_total is not None:
+                icp_score = int(self._clamp(llm_total, 0, 100))
+                logger.warning(
+                    "ICP response missing dimension_scores — using LLM total %d unverified",
+                    icp_score,
+                )
+            else:
+                icp_score = -1
+                logger.warning("ICP response missing both dimension_scores and icp_score")
+
         confidence = int(self._clamp(data.get("confidence_score", 0), 0, 100))
-        reasoning = data.get("icp_reasoning", "")
+        reasoning = str(data.get("icp_reasoning", ""))
         data_gaps = data.get("data_gaps", "")
+
+        if len(reasoning) > 1000:
+            logger.debug("ICP reasoning truncated from %d to 1000 chars", len(reasoning))
+        data_gaps_str = str(data_gaps)[:500] if data_gaps else ""
+        if data_gaps and len(str(data_gaps)) > 500:
+            logger.debug("ICP data_gaps truncated from %d to 500 chars", len(str(data_gaps)))
 
         return {
             "icp_score": icp_score,
             "confidence_score": confidence,
-            "icp_reasoning": str(reasoning)[:1000],
-            "data_gaps": str(data_gaps)[:500] if data_gaps else "",
+            "icp_reasoning": reasoning[:1000],
+            "data_gaps": data_gaps_str,
         }

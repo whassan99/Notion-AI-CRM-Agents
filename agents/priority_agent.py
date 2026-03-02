@@ -7,7 +7,7 @@ Adds a "review" tier when ICP score is missing.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from config import Config
@@ -163,7 +163,10 @@ class PriorityAgent(BaseAgent):
             return 999
         try:
             last_date = datetime.fromisoformat(last_contacted.replace("Z", "+00:00"))
-            now = datetime.now(last_date.tzinfo)
+            # Normalize to UTC to avoid naive/aware mismatch and local TZ bugs
+            if last_date.tzinfo is None:
+                last_date = last_date.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
             return (now - last_date).days
         except (ValueError, AttributeError):
             return 999

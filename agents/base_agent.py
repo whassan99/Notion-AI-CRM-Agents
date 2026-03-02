@@ -23,15 +23,20 @@ class BaseAgent:
         self.prompt_template = self._load_prompt()
 
     def _load_prompt(self) -> str:
-        """Load prompt template from the prompts/ directory."""
+        """Load prompt template from the prompts/ directory.
+
+        Raises FileNotFoundError if prompt_file is set but the file doesn't exist,
+        since running an agent with an empty prompt produces garbage output.
+        """
         if not self.prompt_file:
             return ""
         path = Path(__file__).parent.parent / "prompts" / self.prompt_file
-        try:
-            return path.read_text()
-        except FileNotFoundError:
-            logger.warning("Prompt file not found: %s", path)
-            return ""
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Prompt file missing: {path}. "
+                f"Agent {self.__class__.__name__} cannot run without its prompt."
+            )
+        return path.read_text()
 
     def _call_llm(
         self,

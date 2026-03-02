@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
+from filelock import FileLock
+
 from config import Config
 from services.notion_service import NotionService
 from services.claude_service import ClaudeService
@@ -76,13 +78,20 @@ def _parse_iso_datetime(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
+def _state_lock() -> FileLock:
+    """Return a file lock for the pipeline state file."""
+    path = Path(Config.PIPELINE_STATE_FILE).expanduser()
+    return FileLock(str(path) + ".lock", timeout=10)
+
+
 def _load_last_successful_run() -> Optional[datetime]:
     """Load last successful run timestamp from local state file."""
     path = Path(Config.PIPELINE_STATE_FILE).expanduser()
     if not path.exists():
         return None
     try:
-        payload = json.loads(path.read_text())
+        with _state_lock():
+            payload = json.loads(path.read_text())
     except (json.JSONDecodeError, OSError) as exc:
         logger.warning("Could not read pipeline state from %s: %s", path, exc)
         return None
@@ -96,8 +105,9 @@ def _save_last_successful_run(timestamp: datetime) -> None:
         "last_successful_run": timestamp.astimezone(timezone.utc).isoformat(),
     }
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2))
+        with _state_lock():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(payload, indent=2))
     except OSError as exc:
         logger.warning("Could not write pipeline state to %s: %s", path, exc)
 

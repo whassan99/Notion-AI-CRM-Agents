@@ -64,6 +64,12 @@ class ActionAgent(BaseAgent):
                 "high",
             )
         if priority == "high" and not stale:
+            if research_confidence == "low":
+                return (
+                    "enrich_data",
+                    "High-priority lead but research confidence is low; enrich data before outreach to avoid missteps.",
+                    "medium",
+                )
             return (
                 "outreach_now",
                 "High-priority lead with recent activity; immediate outreach has the best chance to convert.",
@@ -124,4 +130,6 @@ class ActionAgent(BaseAgent):
         if confidence not in _VALID_CONFIDENCE:
             confidence = "medium"
 
+        if len(reasoning) > 1000:
+            logger.debug("Action reasoning truncated from %d to 1000 chars", len(reasoning))
         return action, reasoning[:1000], confidence
