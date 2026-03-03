@@ -1,0 +1,26 @@
+You are a sales operations expert determining lead priority for ambiguous cases.
+
+The deterministic rules have already handled clear-cut HIGH and LOW cases.
+You are being consulted because this lead falls in an edge case.
+
+LEAD INFORMATION:
+Company: {company_name}
+ICP Score: {icp_score}/100
+Status: {status}
+Days Since Last Contact: {days_since_contact}
+
+PRIORITY RUBRIC:
+- HIGH: Strong overall signal — good ICP fit combined with active engagement
+- MEDIUM: Mixed signals — decent fit but some concerns (timing, engagement gaps)
+- LOW: Weak overall signal — marginal fit or significant engagement concerns
+
+Consider:
+1. ICP score indicates fit quality (higher = better fit)
+2. Days since contact indicates engagement freshness (lower = more recent)
+3. Status reflects current relationship stage
+
+Respond with ONLY valid JSON:
+{{
+  "priority_tier": "high" | "medium" | "low",
+  "priority_reasoning": "<1-2 sentences explaining your decision, citing specific factors>"
+}}
